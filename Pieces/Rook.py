@@ -4,9 +4,10 @@ from Pieces.Piece import Piece
 
 class Rook(Piece):
 
-    def __init__(self, team, row, col):
+    def __init__(self, team, row, col, init_position=True):
         super().__init__(team, row, col)
         self.image_path = "Images/bR.png" if self.team == Team.BLACK else "Images/wR.png"
+        self.init_position = init_position
 
     def get_valid_moves(self, board, current_move=True):
         valid_moves = []
@@ -37,4 +38,9 @@ class Rook(Piece):
         return " R "
 
     def copy(self):
-        return Rook(self.team, self.row, self.col)
+        return Rook(self.team, self.row, self.col, self.init_position)
+
+    def move(self, row, col):
+        self.row = row
+        self.col = col
+        self.init_position = False

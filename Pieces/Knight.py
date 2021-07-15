@@ -37,3 +37,5 @@ class Knight(Piece):
 
     def copy(self):
         return Knight(self.team, self.row, self.col)
+
+

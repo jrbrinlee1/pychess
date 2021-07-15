@@ -5,7 +5,6 @@ from Pieces.Team import Team
 import PIL
 from PIL import ImageTk, Image
 
-
 WHITE_SPACE_COLOR = "white"
 BLACK_SPACE_COLOR = "grey"
 SELECTED_COLOR = "red"
@@ -48,6 +47,7 @@ class PyChess(tk.Frame):
         self.board = Board()
         self.board_map = []
         self.create_board_display()
+
         self.pack()
 
     def on_click(self, i, j):
@@ -72,14 +72,32 @@ class PyChess(tk.Frame):
             elif (i, j) in self.click_tracker.valid_moves:
                 # move piece on the board object
                 self.board, self.game_over = self.board.move_piece((self.click_tracker.row, self.click_tracker.col),
-                                                                   (i, j))
-                # update the board map
-                self.make_move_on_board_map(i, j)
+                                                                   (i, j), True)
+                # update the board_map data structure
+                self.reset_board_map_color()
+                self.reset_board_map_images()
+                # finally, reset the click tracker
+                self.click_tracker.reset()
 
             if self.game_over:
                 winner = "black team" if self.board.turn == Team.WHITE else "white team"
                 showinfo("tk", f"The {winner} wins!")
                 self.master.destroy()
+
+    def let_AI_move(self):
+        print("Letting AI move...")
+
+        self.board, self.game_over = self.board.let_AI_move()
+        # update the board_map data structure
+        self.reset_board_map_color()
+        self.reset_board_map_images()
+        # finally, reset the click tracker
+        self.click_tracker.reset()
+
+        if self.game_over:
+            winner = "black team" if self.board.turn == Team.WHITE else "white team"
+            showinfo("tk", f"The {winner} wins!")
+            self.master.destroy()
 
     def highlight_valid_moves(self, moves):
         for move in moves:
@@ -94,27 +112,17 @@ class PyChess(tk.Frame):
                 color = BLACK_SPACE_COLOR if (i + j) % 2 == 1 else WHITE_SPACE_COLOR
                 self.board_map[i][j]['bg'] = color
 
-    def make_move_on_board_map(self, i, j):
-        # get current position of piece
-        c_i = self.click_tracker.row
-        c_j = self.click_tracker.col
+    def reset_board_map_images(self):
+        rows = len(self.board.get_board())
+        cols = len(self.board.get_board()[0])
 
-        # update the board_map data structure
-        self.reset_board_map_color()
-        # get the correct image path for the current position and position piece is moving
-        path = self.board.board[c_i][c_j].image_path if not self.board.is_space_empty(c_i, c_j) else self.blank_path
-        image = PIL.Image.open(path)
-        img = ImageTk.PhotoImage(image)
-        path_2 = self.board.board[i][j].image_path if not self.board.is_space_empty(i, j) else self.blank_path
-        image_2 = PIL.Image.open(path_2)
-        img_2 = ImageTk.PhotoImage(image_2)
-        # update the image in the board_map structure
-        self.board_map[c_i][c_j]['image'] = img
-        self.board_map[c_i][c_j].image = img
-        self.board_map[i][j]['image'] = img_2
-        self.board_map[i][j].image = img_2
-        # finally, reset the click tracker
-        self.click_tracker.reset()
+        for i in range(rows):
+            for j in range(cols):
+                path = self.board.board[i][j].image_path if not self.board.is_space_empty(i, j) else self.blank_path
+                image = PIL.Image.open(path)
+                img = ImageTk.PhotoImage(image)
+                self.board_map[i][j]['image'] = img
+                self.board_map[i][j].image = img
 
     def create_board_display(self):
         rows = len(self.board.get_board())
@@ -140,8 +148,16 @@ class PyChess(tk.Frame):
                 label.grid(row=i, column=j)
                 label.bind('<Button-1>', lambda e, x=i, y=j: self.on_click(x, y))
 
+        # bind enter to let AI move
+        self.bind("<Return>", lambda event: self.let_AI_move())
+        self.focus_set()
 
-class Run:
+
+class FullGUI(tk.Frame):
+    pass
+
+
+def Run():
     chess_root = tk.Tk()
     app = PyChess(master=chess_root)
     app.mainloop()

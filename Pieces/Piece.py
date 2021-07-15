@@ -14,10 +14,18 @@ class Piece(ABC):
 
     @abstractmethod
     def __str__(self):
+        """
+        :return: what should be printed
+        """
         pass
 
     @abstractmethod
     def get_valid_moves(self, board, current_move=False):
+        """
+        :param board: Type Board which is the current state of the board
+        :param current_move: actually making move
+        :return:
+        """
         pass
 
     @abstractmethod
@@ -58,16 +66,8 @@ class Piece(ABC):
     def get_location(self):
         return self.row, self.col
 
-    def harms_way(self, board, current_valid_moves):
-        pass
-        '''
-        for move in current_valid_moves:
-            temp_board, fatal = board.move_piece(self.get_location(), move)
-            for ret_move in temp_board.get_all_moves_and_next_to_king():
-                king = temp_board.white_king if self.team == Team.WHITE else board.black_king
-                if king.get_location() == ret_move:
-                    current_valid_moves.remove(move)
-        '''
+    def get_location(self):
+        return self.row, self.col
 
 
 

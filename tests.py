@@ -1,16 +1,20 @@
 import unittest
 from Board.Board import Board
 from Pieces.Pawn import Pawn
+from Pieces.Queen import Queen
 
 
 class TestPawn(unittest.TestCase):
     """
     Testing Pawn Class:
-     - check moves for left most, right most, and a middle pawn for black and white team with board in initial state
-     - check black and white pawns cannot move forward with opponents piece is in front of it
-     - check black and white pawns can attack left, right, and both if opponents players are there
-     - check black and white cannot move if it leave king in position to be taken
-     - check black and white pawns can move if king is in check but pawn jump in the path of the threatening player
+     - get_valid_moves(board)
+       1 - check moves for left most, right most, and a middle pawn for black and white team with board in initial state
+       2 - make sure black and white move in the right direction when not in the initial position
+       3 - check black and white pawns cannot move forward with piece (opponent/same team) is in front of it
+       4 - check black and white pawns can attack left, right, and both if opponents players are there
+       5 - check white pawns cannot move if it leave king check and check white pawns can move if king
+           is in check but pawn jump in the path of the threatening player
+       6 -
     """
 
     def test_get_valid_moves_1(self):
@@ -116,7 +120,8 @@ class TestPawn(unittest.TestCase):
     def test_get_valid_moves_3(self):
         """
         Test to make sure we get no moves when we have
-        no moves to make (other opponent in the way of forward move, no attack moves)
+        no moves to make (other opponent in the way of forward move, no attack moves and
+        players own team in front with no attacking move)
         :return:
         """
         board = Board()
@@ -136,7 +141,23 @@ class TestPawn(unittest.TestCase):
         self.assertEqual(len(middle_white_pawn.get_valid_moves(board)), 0)
         self.assertEqual(len(middle_black_pawn.get_valid_moves(board)), 0)
 
-        # now check to make sure it cannot move into it's own team
+        # now check to make sure it cannot move into it's own team (one space in front and to in front on initial pos)
+        board = Board()
+        # move white pawns one and two places in front of other white pawns
+        board = board.move_piece((6, 0), (5, 1))[0]
+        board = board.move_piece((6, 2), (4, 3))[0]
+
+        # get the pawns behind them
+        white_pawn_1 = board.board[6][1]
+        white_pawn_2 = board.board[6][3]
+
+        # make sure we've got the pawns
+        self.assertIsInstance(white_pawn_1, Pawn)
+        self.assertIsInstance(white_pawn_2, Pawn)
+
+        # 1 shouldn't be able to move, 2 should only be able to move 1 space
+        self.assertEqual(len(white_pawn_1.get_valid_moves(board)), 0)
+        self.assertEqual(len(white_pawn_2.get_valid_moves(board)), 1)
 
     def test_get_valid_moves_4(self):
         """
@@ -221,16 +242,53 @@ class TestPawn(unittest.TestCase):
         """
         Test to make sure pawn cannot move if it leaves king in position it can be
         taken
+
         :return:
         """
 
         board = Board()
-        # white pawn in front of king up two
+        # white pawn in front of king up two, move black queen to check the king
         board = board.move_piece((6, 3), (4, 3))[0]
-        # black queen in attacking position
         board = board.move_piece((0, 3), (3, 0))[0]
 
-        queen = board.board
+        # get the queen and verify it's the queen
+        black_queen = board.board[3][0]
+        self.assertIsInstance(black_queen, Queen)
+
+        # get white pawn on the far left in initial position, verify it is a pawn
+        left_white_pawn = board.board[6][0]
+        self.assertIsInstance(left_white_pawn, Pawn)
+        # get moves, should be none since it would leave the king in check
+        self.assertEqual(len(left_white_pawn.get_valid_moves(board)), 0)
+
+        # get white pawn on top of bishop and verify it's a pawn
+        left_white_pawn_1 = board.board[6][2]
+        self.assertIsInstance(left_white_pawn_1, Pawn)
+        # get moves, should be one hop in front to block the queen
+        self.assertEqual(len(left_white_pawn_1.get_valid_moves(board)), 1)
+        self.assertEqual(left_white_pawn_1.get_valid_moves(board)[0], (5, 2))
+
+        # get white pawn on top of bishop and verify it's a pawn
+        left_white_pawn_2 = board.board[6][1]
+        self.assertIsInstance(left_white_pawn_2, Pawn)
+        # get moves, should be one hop in front to block the queen
+        self.assertEqual(len(left_white_pawn_2.get_valid_moves(board)), 1)
+        self.assertEqual(left_white_pawn_2.get_valid_moves(board)[0], (4, 1))
+
+    def test_get_valid_moves_6(self):
+        pass
+
+    def test_get_attack_moves(self):
+        """
+        get_attack_moves specific to pawns
+        """
+        pass
+
+
+#class TestRook(unittest.TestCase):
+
+
+
 
 
 if __name__ == '__main__':
