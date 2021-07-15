@@ -1,4 +1,4 @@
-# pychess
+# PyChess
 
 Chess game developed in python
 
