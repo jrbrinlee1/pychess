@@ -1,6 +1,3 @@
-import random
-import heapq
-
 from Pieces.Pawn import Pawn
 from Pieces.Rook import Rook
 from Pieces.Bishop import Bishop
@@ -12,7 +9,7 @@ from Pieces.Team import Team
 
 class Board:
 
-    def __init__(self, board=None, white_pieces=[], black_pieces=[]):
+    def __init__(self, board=None, white_pieces=[], black_pieces=[], moves_since_taken=0, prev_states={}):
         """
         Board object which represents the state of the chess board/game. If no
         arguments are provided to constructor, then a chess board with an initial
@@ -34,6 +31,8 @@ class Board:
         self.board = board
         self.white_pieces = white_pieces
         self.black_pieces = black_pieces
+        self.moves_since_taken = moves_since_taken
+        self.prev_states = prev_states
         if self.board is None:
             self.set_board_to_init_state()
         self.turn = Team.WHITE
@@ -134,7 +133,7 @@ class Board:
     def team_turn(self):
         return self.turn
 
-    def move_piece(self, current_pos, next_pos, check_promotion=False, ai=False):
+    def move_piece(self, current_pos, next_pos, gui_move=False, ai=False):
         """
         Method that returns a copy of the current board with the piece on
         current_pos moved to next_pos. No error / valid move checking here.
@@ -143,14 +142,17 @@ class Board:
         :param current_pos: position of piece you'd like to move
         :param next_pos: position you'd like to move th piece
         :param ai: is ai making this move
-        :return: Copy of the current board with specified move made
+        :return: {'board': copy of new board, 'game_over': bool, 'draw': bool, 'winner': Team.WHITE or Team.BLACK}
         """
 
+        # copy board and retrieve the piece being moved along with it's data
         new_board = self.copy_board_object()
+        return_dictionary = {'board': new_board, 'game_over': False, 'draw': False, 'winner': None}
         piece = new_board.get_board()[current_pos[0]][current_pos[1]]
         data = piece.move(next_pos[0], next_pos[1])
+        new_board.moves_since_taken += 1
 
-        # check for castle move
+        # check for and make castle move
         if isinstance(piece, King):
             if data:
                 new_board.get_board()[current_pos[0]][current_pos[1]] = False
@@ -171,22 +173,23 @@ class Board:
                     new_board.get_board()[row][0] = False
 
                 new_board.turn = Team.BLACK if piece.get_team() == Team.WHITE else Team.WHITE
-                return new_board, False
 
-        # non-castle move
+                three_fold_bool = False
+                if gui_move:
+                    three_fold_bool = new_board.add_state_check_threefold()
+
+                if three_fold_bool:
+                    return_dictionary['game_over'] = True
+                    return_dictionary['draw'] = True
+
+                return return_dictionary
+
+        # non-castle move, make the move on the board.board
         destination_piece = new_board.board[next_pos[0]][next_pos[1]]
         new_board.board[current_pos[0]][current_pos[1]] = False
         new_board.board[next_pos[0]][next_pos[1]] = piece
 
-        en_passant = False
-        promotion = False
-
-        if isinstance(piece, Pawn):
-            # only pawn returns this data
-            if data is not None:
-                en_passant = data[0]
-                promotion = data[1]
-
+        # if a piece was taken, remove it from the set of pieces
         if piece.get_team() == Team.WHITE:
             moving_team_pieces = new_board.white_pieces
             opponents_pieces = new_board.black_pieces
@@ -198,22 +201,63 @@ class Board:
 
         if destination_piece:
             opponents_pieces.remove(destination_piece)
+            new_board.moves_since_taken = 0
+
+        # Check for en_passant and pawn promotion
+        en_passant = False
+        promotion = False
+        if isinstance(piece, Pawn):
+            if data is not None:
+                en_passant = data[0]
+                promotion = data[1]
         if en_passant:
             opponents_pieces.remove(new_board.board[next_pos[0] + 1][next_pos[1]])
+            new_board.moves_since_taken = 0
             new_board.board[next_pos[0] + 1][next_pos[1]] = False
+
+        # if we get to pawn that wasn't just moved, update en_passant_data
         for pc in moving_team_pieces:
-            # if we get to pawn that wasn't just moved, update en_passant_data
             if isinstance(pc, Pawn) and pc is not piece:
                 pc.en_passant_move = []
                 pc.just_moved_two = False
 
+        # was king taken, then game over with winner
         if isinstance(destination_piece, King):
-            return new_board, True
+            winner = "black team" if self.board.turn == Team.WHITE else "white team"
+            return_dictionary['game_over'] = True
+            return_dictionary['winner'] = winner
+            return return_dictionary
 
-        if promotion and check_promotion:
+        three_fold_bool = False
+        if gui_move:
+            three_fold_bool = new_board.add_state_check_threefold()
+
+        # was there 50 moves made without a piece being taken, then game over draw
+        if new_board.moves_since_taken >= 50 or three_fold_bool:
+            return_dictionary['game_over'] = True
+            return_dictionary['draw'] = True
+            return return_dictionary
+
+        if promotion and gui_move:
             new_board.execute_pawn_promotion(piece.get_team(), next_pos, ai)
 
-        return new_board, False
+        new_board.turn = Team.BLACK if piece.get_team() == Team.WHITE else Team.WHITE
+
+        return return_dictionary
+
+    def add_state_check_threefold(self):
+        state = self.create_state_tuple()
+        if state in self.prev_states.keys():
+            count = self.prev_states[state]
+            count = count + 1
+            if count == 3:
+                return True
+            else:
+                self.prev_states[state] = count
+        else:
+            self.prev_states[state] = 1
+
+        return False
 
     def execute_pawn_promotion(self, team, next_pos, ai):
         if not ai:
@@ -264,11 +308,10 @@ class Board:
                     row.append(False)
             new_board.append(row)
 
-        return Board(new_board, new_white_pieces, new_black_pieces)
+        return Board(new_board, new_white_pieces, new_black_pieces, self.moves_since_taken, self.prev_states)
 
     def let_AI_move(self):
         white = True if self.team_turn() is Team.WHITE else False
-
         best_move, _, _ = self.max_value(white, 4, float('-inf'), float('inf'))
         move = self.move_piece(best_move[0], best_move[1], True, ai=True)
         print(f"AI has returned the best move - {best_move[0]} to {best_move[1]}...")
@@ -388,3 +431,38 @@ class Board:
                 moves = moves + pc.get_valid_moves(self, False)
 
         return moves
+
+    def create_state_tuple(self):
+        state = []
+        for i in range(len(self.board)):
+            state_row = []
+            for j in range(len(self.board[0])):
+                piece = self.board[i][j]
+                if not piece:
+                    state_row.append('x')
+                else:
+                    string = ''
+                    if isinstance(piece, King):
+                        _, can_castle = piece.try_adding_castle(self, [])
+                        if can_castle:
+                            string = string + 'c'
+                    if isinstance(piece, Pawn):
+                        try:
+                            piece.en_passant(self)
+                            if len(piece.en_passant_move) != 0:
+                                string = string + 'e'
+                        except TypeError:
+                            pass
+
+                    string = string + 'W' if piece.get_team() == Team.WHITE else string + 'B'
+
+                    string = string + str(piece)
+                    state_row.append(string)
+            state.append(state_row)
+
+        tuple_representation = []
+        for i in range(len(state)):
+            row_as_tuple = tuple(state[i])
+            tuple_representation.append(row_as_tuple)
+
+        return tuple(tuple_representation)

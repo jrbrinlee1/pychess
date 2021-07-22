@@ -43,6 +43,8 @@ class PyChess(tk.Frame):
         self.blank_path = "Images/blank.png"
         self.master = master
         self.game_over = False
+        self.draw = False
+        self.winner = None
         self.click_tracker = ClickTracker()
         self.board = Board()
         self.board_map = []
@@ -60,7 +62,10 @@ class PyChess(tk.Frame):
                 if self.board.team_turn() == team_on_space:
                     piece = self.board.get_board()[i][j]
                     self.board_map[i][j]['bg'] = SELECTED_COLOR
+                    #try:
                     self.click_tracker.update(i, j, piece, piece.get_valid_moves(self.board))
+                    #except:
+                    #    print(f"No valid moves!!!!!!!!!!!!!!!!!")
                     self.highlight_valid_moves(self.click_tracker.valid_moves)
         # piece is currently highlighted / clicked on
         elif self.click_tracker.status == 1:
@@ -71,8 +76,11 @@ class PyChess(tk.Frame):
             # else, if they click on a valid move, make the move and update accordingly
             elif (i, j) in self.click_tracker.valid_moves:
                 # move piece on the board object
-                self.board, self.game_over = self.board.move_piece((self.click_tracker.row, self.click_tracker.col),
-                                                                   (i, j), True)
+                move_dict = self.board.move_piece((self.click_tracker.row, self.click_tracker.col), (i, j), True)
+                self.board = move_dict['board']
+                self.game_over = move_dict['game_over']
+                self.draw = move_dict['draw']
+                self.winner = move_dict['winner']
                 # update the board_map data structure
                 self.reset_board_map_color()
                 self.reset_board_map_images()
@@ -80,14 +88,20 @@ class PyChess(tk.Frame):
                 self.click_tracker.reset()
 
             if self.game_over:
-                winner = "black team" if self.board.turn == Team.WHITE else "white team"
-                showinfo("tk", f"The {winner} wins!")
+                if self.draw:
+                    showinfo("tk", f"The game ends in a draw!")
+                else:
+                    showinfo("tk", f"The {self.winner} wins!")
                 self.master.destroy()
 
     def let_AI_move(self):
         print("Letting AI move...")
 
-        self.board, self.game_over = self.board.let_AI_move()
+        move_dict = self.board.let_AI_move()
+        self.board = move_dict['board']
+        self.game_over = move_dict['game_over']
+        self.draw = move_dict['draw']
+        self.winner = move_dict['winner']
         # update the board_map data structure
         self.reset_board_map_color()
         self.reset_board_map_images()
@@ -95,8 +109,7 @@ class PyChess(tk.Frame):
         self.click_tracker.reset()
 
         if self.game_over:
-            winner = "black team" if self.board.turn == Team.WHITE else "white team"
-            showinfo("tk", f"The {winner} wins!")
+            showinfo("tk", f"The {self.winner} wins!")
             self.master.destroy()
 
     def highlight_valid_moves(self, moves):

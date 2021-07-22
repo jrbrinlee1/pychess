@@ -45,8 +45,8 @@ class Piece(ABC):
         remove_from_valid = []
         # make sure the king isn't moving into harms way
         for move in valid_moves:
-            test_board, fatal = board.move_piece((self.row, self.col), move)
-            if (king.row, king.col) in test_board.potential_next_moves():
+            move_dict = board.move_piece((self.row, self.col), move)
+            if (king.row, king.col) in move_dict['board'].potential_next_moves():
                 remove_from_valid.append(move)
 
         remove_from_valid = set(remove_from_valid)
