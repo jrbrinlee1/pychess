@@ -9,6 +9,12 @@ class Bishop(Piece):
         self.image_path = "Images/bB.png" if self.team == Team.BLACK else "Images/wB.png"
 
     def get_valid_moves(self, board, current_move=True):
+        """
+        Method used to get the valid move for the bishop
+        :param board: current board object
+        :param current_move: True to remove moves from list if king will be in check, false otherwise
+        :return: list of valid moves for current bishop
+        """
         valid_moves = []
         options = [(1, 1), (1, -1), (-1, 1), (-1, -1)]
 
@@ -34,7 +40,13 @@ class Bishop(Piece):
         return valid_moves
 
     def __str__(self):
+        """
+        :return: string representation of a Bishop
+        """
         return " B "
 
     def copy(self):
+        """
+        :return: copy of the current bishop piece
+        """
         return Bishop(self.team, self.row, self.col)

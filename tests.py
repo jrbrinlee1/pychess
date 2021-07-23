@@ -77,17 +77,17 @@ class TestPawn(unittest.TestCase):
 
     def test_get_valid_moves_2(self):
         """
-        Test to make sure we get valid moves when off initial
+        Test to make sure we get valid moves when off initial \
         state and not by other pieces for both teams (should be just one move forward)
         :return:
         """
         board = Board()
         # move left most white pawn and a middle white pawn
-        board = board.move_piece((6, 0), (4, 0))[0]
-        board = board.move_piece((6, 2), (4, 2))[0]
+        board = board.move_piece((6, 0), (4, 0))['board']
+        board = board.move_piece((6, 2), (4, 2))['board']
         # move right most black pawn and a middle black pawn
-        board = board.move_piece((1, 7), (3, 7))[0]
-        board = board.move_piece((1, 5), (3, 5))[0]
+        board = board.move_piece((1, 7), (3, 7))['board']
+        board = board.move_piece((1, 5), (3, 5))['board']
 
         # get those pieces at new locations
         left_most_white_pawn = board.board[4][0]
@@ -126,8 +126,8 @@ class TestPawn(unittest.TestCase):
         """
         board = Board()
         # move white and black pawn in column 4 forward two spaces
-        board = board.move_piece((6, 4), (4, 4))[0]
-        board = board.move_piece((1, 4), (3, 4))[0]
+        board = board.move_piece((6, 4), (4, 4))['board']
+        board = board.move_piece((1, 4), (3, 4))['board']
 
         # get those pieces we just moved
         middle_white_pawn = board.board[4][4]
@@ -144,8 +144,8 @@ class TestPawn(unittest.TestCase):
         # now check to make sure it cannot move into it's own team (one space in front and to in front on initial pos)
         board = Board()
         # move white pawns one and two places in front of other white pawns
-        board = board.move_piece((6, 0), (5, 1))[0]
-        board = board.move_piece((6, 2), (4, 3))[0]
+        board = board.move_piece((6, 0), (5, 1))['board']
+        board = board.move_piece((6, 2), (4, 3))['board']
 
         # get the pawns behind them
         white_pawn_1 = board.board[6][1]
@@ -181,8 +181,8 @@ class TestPawn(unittest.TestCase):
 
         board = Board()
         # move white in column 5 and black pawn in column 5 forward two spaces
-        board = board.move_piece((6, 4), (4, 4))[0]
-        board = board.move_piece((1, 5), (3, 5))[0]
+        board = board.move_piece((6, 4), (4, 4))['board']
+        board = board.move_piece((1, 5), (3, 5))['board']
 
         # get those pieces we just moved
         middle_white_pawn = board.board[4][4]
@@ -205,7 +205,7 @@ class TestPawn(unittest.TestCase):
             self.assertIn(move, actual)
 
         # now move other black pawn to the left of white pawn up two spaces
-        board = board.move_piece((1, 3), (3, 3))[0]
+        board = board.move_piece((1, 3), (3, 3))['board']
 
         # get that pawn
         left_black_pawn = board.board[3][3]
@@ -222,7 +222,7 @@ class TestPawn(unittest.TestCase):
             self.assertIn(move, actual)
 
         # now move other white pawn to the left of the black pawn we just move up two spaces
-        board = board.move_piece((6, 2), (4, 2))[0]
+        board = board.move_piece((6, 2), (4, 2))['board']
 
         # get that pawn
         left_white_pawn = board.board[4][2]
@@ -248,8 +248,8 @@ class TestPawn(unittest.TestCase):
 
         board = Board()
         # white pawn in front of king up two, move black queen to check the king
-        board = board.move_piece((6, 3), (4, 3))[0]
-        board = board.move_piece((0, 3), (3, 0))[0]
+        board = board.move_piece((6, 3), (4, 3))['board']
+        board = board.move_piece((0, 3), (3, 0))['board']
 
         # get the queen and verify it's the queen
         black_queen = board.board[3][0]
@@ -284,11 +284,7 @@ class TestPawn(unittest.TestCase):
         """
         pass
 
-
-#class TestRook(unittest.TestCase):
-
-
-
+# class TestRook(unittest.TestCase):
 
 
 if __name__ == '__main__':

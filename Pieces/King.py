@@ -17,12 +17,13 @@ class King(Piece):
         self.image_path = "Images/bK.png" if self.team == Team.BLACK else "Images/wK.png"
         self.move_options = [(1, 1), (1, -1), (-1, 1), (-1, -1), (0, 1), (0, -1), (1, 0), (-1, 0)]
         self.init_position = init_position
+        self.is_king = True
 
     def get_valid_moves(self, board, current_move=True):
         """
         Method used to get the valid move for the king
         :param board: current board object
-        :param current_move: True if this is an actual move, False if we are just looking into future moves
+        :param current_move: True to make sure king isn't moving into check, false otherwise
         :return: list of valid moves for current king
         """
         valid_moves = []

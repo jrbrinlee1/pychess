@@ -1,3 +1,4 @@
+from Pieces import Piece
 from Pieces.Pawn import Pawn
 from Pieces.Rook import Rook
 from Pieces.Bishop import Bishop
@@ -5,6 +6,11 @@ from Pieces.Knight import Knight
 from Pieces.Queen import Queen
 from Pieces.King import King
 from Pieces.Team import Team
+
+ROW = 8
+COL = 8
+ROWS = range(0, ROW)
+COLS = range(0, COL)
 
 
 class Board:
@@ -19,10 +25,6 @@ class Board:
             self.white_pieces - List
             self.black_pieces - List
             self.turn -
-            self.white_king -
-            self.black_king -
-            self.is_black_in_check -
-            self.is_white_in_check -
         :param board: List[List] type which contains row/columns of Piece objects
                       or False when there is no piece in that position.
         :param white_pieces: List of pieces that belong to the white team
@@ -36,16 +38,6 @@ class Board:
         if self.board is None:
             self.set_board_to_init_state()
         self.turn = Team.WHITE
-        self.white_king = None
-        self.black_king = None
-        for pc in self.white_pieces:
-            if isinstance(pc, King):
-                self.white_king = pc
-        for pc in self.black_pieces:
-            if isinstance(pc, King):
-                self.black_king = pc
-        self.is_black_in_check = False
-        self.is_white_in_check = False
 
     def set_board_to_init_state(self):
         """
@@ -53,94 +45,35 @@ class Board:
          in their initial states. (i.e. no moves have been made)
         :return: None
         """
-
         black_back_row = [Rook(Team.BLACK, 0, 0), Knight(Team.BLACK, 0, 1), Bishop(Team.BLACK, 0, 2),
                           Queen(Team.BLACK, 0, 3), King(Team.BLACK, 0, 4), Bishop(Team.BLACK, 0, 5),
                           Knight(Team.BLACK, 0, 6), Rook(Team.BLACK, 0, 7)]
+        white_back_row = [Rook(Team.WHITE, 7, 0), Knight(Team.WHITE, 7, 1), Bishop(Team.WHITE, 7, 2),
+                          Queen(Team.WHITE, 7, 3), King(Team.WHITE, 7, 4), Bishop(Team.WHITE, 7, 5),
+                          Knight(Team.WHITE, 7, 6), Rook(Team.WHITE, 7, 7)]
+
         board = [black_back_row]
-
-        black_pawns = []
-        for i in range(8):
-            black_pawns.append(Pawn(Team.BLACK, 1, i))
+        black_pawns = [Pawn(Team.BLACK, 1, i) for i in range(8)]
         board.append(black_pawns)
-
         for i in range(4):
-            row = []
-            for j in range(8):
-                row.append(False)
+            row = [False for j in range(8)]
             board.append(row)
-        white_pawns = []
-        for i in range(8):
-            white_pawns.append(Pawn(Team.WHITE, 6, i))
+        white_pawns = [Pawn(Team.WHITE, 6, i) for i in range(8)]
         board.append(white_pawns)
-
-        white_back_pieces = [Rook(Team.WHITE, 7, 0), Knight(Team.WHITE, 7, 1), Bishop(Team.WHITE, 7, 2),
-                             Queen(Team.WHITE, 7, 3), King(Team.WHITE, 7, 4), Bishop(Team.WHITE, 7, 5),
-                             Knight(Team.WHITE, 7, 6), Rook(Team.WHITE, 7, 7)]
-        board.append(white_back_pieces)
+        board.append(white_back_row)
 
         self.board = board
-
-        self.white_pieces = white_pawns[:]
-        for pc in white_back_pieces:
-            self.white_pieces.append(pc)
-        self.black_pieces = black_back_row[:]
-        for pc in black_pawns:
-            self.black_pieces.append(pc)
-
-    def print_board(self):
-        for i in range(8):
-            for j in range(8):
-                print(" ", end="")
-                if not self.board[i][j]:
-                    print("[ ]", end="")
-                else:
-                    print(self.board[i][j], end="")
-                if j == 7:
-                    print()
-
-    def is_space_empty(self, row, col):
-        """
-        :param row: row on the board
-        :param col: col on the board
-        :return: True when board[row][col] has a piece on it. False otherwise.
-        """
-        if row < 0 or col < 0:
-            return None
-
-        try:
-            return True if not self.board[row][col] else False
-        except IndexError:
-            return None
-
-    def team_on(self, row, col):
-        """
-        :param row: row on the board
-        :param col: col on the board
-        :return: White when board[row][col] has a white piece on it, Black
-                 when board[row][col] has a black piece on it, and None if
-                 there is no piece at that location.
-        """
-        try:
-            ret = self.board[row][col].get_team()
-        except IndexError:
-            return None
-        return ret
-
-    def get_board(self):
-        return self.board
-
-    def team_turn(self):
-        return self.turn
+        self.white_pieces = white_pawns[:] + white_back_row[:]
+        self.black_pieces = black_pawns[:] + black_back_row[:]
 
     def move_piece(self, current_pos, next_pos, gui_move=False, ai=False):
         """
         Method that returns a copy of the current board with the piece on
         current_pos moved to next_pos. No error / valid move checking here.
         Valid move checking done a piece level.
-        :param check_promotion:
         :param current_pos: position of piece you'd like to move
         :param next_pos: position you'd like to move th piece
+        :param gui_move: True if move is being made on gui, False if it's being made in game logic
         :param ai: is ai making this move
         :return: {'board': copy of new board, 'game_over': bool, 'draw': bool, 'winner': Team.WHITE or Team.BLACK}
         """
@@ -151,105 +84,105 @@ class Board:
         piece = new_board.get_board()[current_pos[0]][current_pos[1]]
         data = piece.move(next_pos[0], next_pos[1])
         new_board.moves_since_taken += 1
+        castle = False
 
         # check for and make castle move
-        if isinstance(piece, King):
-            if data:
-                new_board.get_board()[current_pos[0]][current_pos[1]] = False
-                if piece.get_team() == Team.WHITE:
-                    row = 7
-                else:
-                    row = 0
+        if isinstance(piece, King) and data and gui_move:
+            # update board
+            castle = True
+            row = 7 if piece.get_team() == Team.WHITE else 0
+            king_col = 6 if next_pos[1] == 7 else 2
+            rook_col = 5 if next_pos[1] == 7 else 3
+            rook = new_board.get_board()[row][next_pos[1]]
+            rook.move(row, rook_col)
+            new_board.get_board()[row][king_col] = piece
+            new_board.get_board()[row][rook_col] = rook
+            new_board.get_board()[current_pos[0]][current_pos[1]] = False
+            new_board.get_board()[next_pos[0]][next_pos[1]] = False
 
-                if next_pos[1] == 7:
-                    new_board.get_board()[row][6] = piece
-                    new_board.get_board()[row][5] = new_board.get_board()[row][7]
-                    new_board.get_board()[row][5].move(row, 5)
-                    new_board.get_board()[7][7] = False
-                else:
-                    new_board.get_board()[row][2] = piece
-                    new_board.get_board()[row][3] = new_board.get_board()[row][0]
-                    new_board.get_board()[row][3].move(row, 3)
-                    new_board.get_board()[row][0] = False
+        if not castle:
+            # non-castle move, make the move on the board.board
+            destination_piece = new_board.board[next_pos[0]][next_pos[1]]
+            new_board.board[current_pos[0]][current_pos[1]] = False
+            new_board.board[next_pos[0]][next_pos[1]] = piece
 
-                new_board.turn = Team.BLACK if piece.get_team() == Team.WHITE else Team.WHITE
+            if destination_piece:
+                new_board.update_teams_pieces()
+                new_board.moves_since_taken = 0
 
-                three_fold_bool = False
-                if gui_move:
-                    three_fold_bool = new_board.add_state_check_threefold()
+            # Check for en_passant and pawn promotion
+            if isinstance(piece, Pawn):
+                if data[0]:  # if en passant
+                    new_board.moves_since_taken = 0
+                    new_board.board[next_pos[0] + 1][next_pos[1]] = False
+                if data[1] and gui_move:  # check if pawn promotion and gui move
+                    new_board.execute_pawn_promotion(piece.get_team(), next_pos, ai)
+        # endif not castle
 
-                if three_fold_bool:
-                    return_dictionary['game_over'] = True
-                    return_dictionary['draw'] = True
-
-                return return_dictionary
-
-        # non-castle move, make the move on the board.board
-        destination_piece = new_board.board[next_pos[0]][next_pos[1]]
-        new_board.board[current_pos[0]][current_pos[1]] = False
-        new_board.board[next_pos[0]][next_pos[1]] = piece
-
-        # if a piece was taken, remove it from the set of pieces
-        if piece.get_team() == Team.WHITE:
-            moving_team_pieces = new_board.white_pieces
-            opponents_pieces = new_board.black_pieces
-            new_board.turn = Team.BLACK
-        else:
-            moving_team_pieces = new_board.black_pieces
-            opponents_pieces = new_board.white_pieces
-            new_board.turn = Team.WHITE
-
-        if destination_piece:
-            opponents_pieces.remove(destination_piece)
-            new_board.moves_since_taken = 0
-
-        # Check for en_passant and pawn promotion
-        en_passant = False
-        promotion = False
-        if isinstance(piece, Pawn):
-            if data is not None:
-                en_passant = data[0]
-                promotion = data[1]
-        if en_passant:
-            opponents_pieces.remove(new_board.board[next_pos[0] + 1][next_pos[1]])
-            new_board.moves_since_taken = 0
-            new_board.board[next_pos[0] + 1][next_pos[1]] = False
-
-        # if we get to pawn that wasn't just moved, update en_passant_data
+        moving_team_pieces = new_board.white_pieces if piece.get_team() == Team.WHITE else new_board.black_pieces
         for pc in moving_team_pieces:
             if isinstance(pc, Pawn) and pc is not piece:
                 pc.en_passant_move = []
                 pc.just_moved_two = False
 
-        # was king taken, then game over with winner
-        if isinstance(destination_piece, King):
-            winner = "black team" if self.board.turn == Team.WHITE else "white team"
-            return_dictionary['game_over'] = True
-            return_dictionary['winner'] = winner
-            return return_dictionary
-
+        # check for threefold rule
         three_fold_bool = False
         if gui_move:
             three_fold_bool = new_board.add_state_check_threefold()
 
-        # was there 50 moves made without a piece being taken, then game over draw
+        # was there 50 moves made without a piece being taken or third instance of game board, then game over and draw
         if new_board.moves_since_taken >= 50 or three_fold_bool:
             return_dictionary['game_over'] = True
             return_dictionary['draw'] = True
-            return return_dictionary
 
-        if promotion and gui_move:
-            new_board.execute_pawn_promotion(piece.get_team(), next_pos, ai)
-
+        # change turns
         new_board.turn = Team.BLACK if piece.get_team() == Team.WHITE else Team.WHITE
+
+        # check mate or draw?
+        if gui_move:
+            pcs = self.white_pieces if new_board.turn == Team.WHITE else self.black_pieces
+            moves = []
+            check = False
+            for pc in pcs:
+                moves = moves + pc.get_valid_moves(new_board, False)
+                moves = pc.king_in_harms_way(new_board, moves)
+                if isinstance(pc, King):
+                    if pc.in_check(new_board, (pc.row, pc.col)):
+                        check = True
+            if len(moves) == 0:
+                return_dictionary['game_over'] = True
+                if check:
+                    return_dictionary['draw'] = False
+                    return_dictionary['winner'] = 'white team' if new_board.turn == Team.BLACK else 'black team'
+                else:
+                    return_dictionary['draw'] = True
+
+        new_board.update_teams_pieces()
 
         return return_dictionary
 
+    def update_teams_pieces(self):
+        self.white_pieces = []
+        self.black_pieces = []
+        # if we get to pawn that wasn't just moved, update en_passant_data
+        for row in ROWS:
+            for col in COLS:
+                pc = self.board[row][col]
+                if pc:
+                    pc.move(row, col)
+                    if pc.get_team() == Team.WHITE:
+                        self.white_pieces.append(pc)
+                    else:
+                        self.black_pieces.append(pc)
+
     def add_state_check_threefold(self):
+        # get state of the board as string tuple
         state = self.create_state_tuple()
+        # if we've seen the state before, increment count
         if state in self.prev_states.keys():
             count = self.prev_states[state]
             count = count + 1
+            # if we've seen this state three times, then threefold rule says draw
             if count == 3:
                 return True
             else:
@@ -311,23 +244,18 @@ class Board:
         return Board(new_board, new_white_pieces, new_black_pieces, self.moves_since_taken, self.prev_states)
 
     def let_AI_move(self):
-        white = True if self.team_turn() is Team.WHITE else False
+        white = True if self.team_turn() == Team.WHITE else False
         best_move, _, _ = self.max_value(white, 4, float('-inf'), float('inf'))
-        move = self.move_piece(best_move[0], best_move[1], True, ai=True)
-        print(f"AI has returned the best move - {best_move[0]} to {best_move[1]}...")
+        move = self.move_piece(best_move[0], best_move[1], True, True)
+        print(f"AI has returned the best move for white:{white} - {best_move[0]} to {best_move[1]}...")
         return move
 
     def get_successors(self, white):
-
-        if white:
-            piece_set = self.white_pieces
-        else:
-            piece_set = self.black_pieces
-
+        piece_set = self.white_pieces if white else self.black_pieces
         for pc in piece_set:
             for move in pc.get_valid_moves(self):
-                temp_board, game_over = self.move_piece(pc.get_location(), move)
-                yield (pc.get_location(), move), temp_board
+                move_dict = self.move_piece(pc.get_location(), move, False, True)
+                yield (pc.get_location(), move), move_dict['board']
 
     def get_utility(self, white):
         utility = 0
@@ -466,3 +394,47 @@ class Board:
             tuple_representation.append(row_as_tuple)
 
         return tuple(tuple_representation)
+
+    def print_board(self):
+        for i in range(8):
+            for j in range(8):
+                print(" ", end="")
+                if not self.board[i][j]:
+                    print("[ ]", end="")
+                else:
+                    print(self.board[i][j], end="")
+                if j == 7:
+                    print()
+
+    def is_space_empty(self, row, col):
+        """
+        :param row: row on the board
+        :param col: col on the board
+        :return: True when board[row][col] has piece on it. False when it doesn't. None when it's not a valid location.
+        """
+        if row < 0 or col < 0:
+            return None
+        try:
+            return True if not self.board[row][col] else False
+        except IndexError:
+            return None
+
+    def team_on(self, row, col):
+        """
+        :param row: row on the board
+        :param col: col on the board
+        :return: White when board[row][col] has a white piece on it, Black
+                 when board[row][col] has a black piece on it, and None if
+                 it's not a valid location.
+        """
+        try:
+            ret = self.board[row][col].get_team()
+        except IndexError:
+            return None
+        return ret
+
+    def get_board(self):
+        return self.board
+
+    def team_turn(self):
+        return self.turn

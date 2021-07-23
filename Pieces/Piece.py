@@ -11,6 +11,7 @@ class Piece(ABC):
         self.team = team
         self.row = row
         self.col = col
+        self.is_king = False
 
     @abstractmethod
     def __str__(self):
@@ -30,25 +31,33 @@ class Piece(ABC):
 
     @abstractmethod
     def copy(self):
+        """
+        :return: copy of the current piece
+        """
         pass
 
     def king_in_harms_way(self, board, valid_moves):
         """
-        for king, use it's own harms way method
-        :param board:
-        :param valid_moves:
-        :return:
+        default king_in_harms_way method (only king overrides this version)
+        :param board: current board object
+        :param valid_moves: list of current valid moves
+        :return: updated valid_moves list (List(Tuple)) with moves removed that would leave the king in check
         """
+        copy = board.copy_board_object()
 
-        king = board.white_king if self.team == Team.WHITE else board.black_king
+        pieces = copy.white_pieces if self.team == Team.WHITE else copy.black_pieces
+        for pc in pieces:
+            if pc.is_king:
+                king = pc
 
         remove_from_valid = []
         # make sure the king isn't moving into harms way
         for move in valid_moves:
-            move_dict = board.move_piece((self.row, self.col), move)
+            move_dict = copy.move_piece((self.row, self.col), move, False)
             if (king.row, king.col) in move_dict['board'].potential_next_moves():
                 remove_from_valid.append(move)
 
+        # remove those moves that would put king in check
         remove_from_valid = set(remove_from_valid)
         for move in remove_from_valid:
             if move in valid_moves:
@@ -66,8 +75,6 @@ class Piece(ABC):
     def get_location(self):
         return self.row, self.col
 
-    def get_location(self):
-        return self.row, self.col
 
 
 

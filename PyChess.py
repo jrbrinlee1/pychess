@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter.messagebox import showinfo
 from Board.Board import Board
-from Pieces.Team import Team
+import sys
 import PIL
 from PIL import ImageTk, Image
 
@@ -62,10 +62,7 @@ class PyChess(tk.Frame):
                 if self.board.team_turn() == team_on_space:
                     piece = self.board.get_board()[i][j]
                     self.board_map[i][j]['bg'] = SELECTED_COLOR
-                    #try:
                     self.click_tracker.update(i, j, piece, piece.get_valid_moves(self.board))
-                    #except:
-                    #    print(f"No valid moves!!!!!!!!!!!!!!!!!")
                     self.highlight_valid_moves(self.click_tracker.valid_moves)
         # piece is currently highlighted / clicked on
         elif self.click_tracker.status == 1:
@@ -76,7 +73,7 @@ class PyChess(tk.Frame):
             # else, if they click on a valid move, make the move and update accordingly
             elif (i, j) in self.click_tracker.valid_moves:
                 # move piece on the board object
-                move_dict = self.board.move_piece((self.click_tracker.row, self.click_tracker.col), (i, j), True)
+                move_dict = self.board.move_piece((self.click_tracker.row, self.click_tracker.col), (i, j), True, False)
                 self.board = move_dict['board']
                 self.game_over = move_dict['game_over']
                 self.draw = move_dict['draw']
@@ -109,7 +106,10 @@ class PyChess(tk.Frame):
         self.click_tracker.reset()
 
         if self.game_over:
-            showinfo("tk", f"The {self.winner} wins!")
+            if self.draw:
+                showinfo("tk", f"The game ends in a draw!")
+            else:
+                showinfo("tk", f"The {self.winner} wins!")
             self.master.destroy()
 
     def highlight_valid_moves(self, moves):
@@ -170,11 +170,24 @@ class FullGUI(tk.Frame):
     pass
 
 
-def Run():
+def Run(ai=False):
     chess_root = tk.Tk()
     app = PyChess(master=chess_root)
-    app.mainloop()
+    if ai:
+        while True:
+            #try:
+            app.let_AI_move()
+            #except AttributeError:
+            #    print("having trouble with ai")
+            #    inp = input()
+            app.update_idletasks()
+            app.update()
+    else:
+        app.mainloop()
 
 
 if __name__ == "__main__":
-    Run()
+    if len(sys.argv) == 2:
+        Run(True)
+    else:
+        Run()

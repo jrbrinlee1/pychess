@@ -9,6 +9,12 @@ class Queen(Piece):
         self.image_path = "Images/bQ.png" if self.team == Team.BLACK else "Images/wQ.png"
 
     def get_valid_moves(self, board, current_move=True):
+        """
+        Method used to get the valid move for the queen
+        :param board: current board object
+        :param current_move: True to remove moves from list if king will be in check, false otherwise
+        :return: list of valid moves for current queen
+        """
         valid_moves = []
         options = [(1, 1), (1, -1), (-1, 1), (-1, -1), (0, 1), (0, -1), (1, 0), (-1, 0)]
 
@@ -34,7 +40,13 @@ class Queen(Piece):
         return valid_moves
 
     def __str__(self):
+        """
+        :return: string representation of a queen
+        """
         return " Q "
 
     def copy(self):
+        """
+        :return: copy of the current queen piece
+        """
         return Queen(self.team, self.row, self.col)

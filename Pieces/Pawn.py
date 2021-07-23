@@ -13,6 +13,12 @@ class Pawn(Piece):
         self.en_passant_move = en_passant_move
 
     def get_valid_moves(self, board, current_move=True):
+        """
+        Method used to get the valid move for the pawn
+        :param board: current board object
+        :param current_move: True to remove moves from list if king will be in check, false otherwise
+        :return: list of valid moves for current pawn
+        """
 
         valid_moves = []
         attack_forward_one_empty = board.is_space_empty(self.row + self.direction, self.col)
@@ -45,40 +51,61 @@ class Pawn(Piece):
         return valid_moves
 
     def __str__(self):
+        """
+        :return: string representation of a pawn
+        """
         return " P "
 
     def copy(self):
+        """
+        :return: copy of the current pawn piece
+        """
         return Pawn(self.team, self.row, self.col, self.init_position, self.just_moved_two, self.en_passant_move)
 
     def get_attack_moves(self):
+        """
+        :return: Returns forward diagonals of current pawns location [( , ), ( , )]
+        """
         return [(self.row + self.direction, self.col + 1), (self.row + self.direction, self.col - 1)]
 
     def move(self, row, col):
+        """
+        Updates the location details of current pawn piece (self.row and self.col) and updates self.init_position to
+        show that the pawn has been moved. Also keeps track of if the pawn was just moved two spaces (it could be
+        captured en passant). Finally, checks and returns whether move was en passant or pawn promotion.
+        :param row: destination row
+        :param col: destination column
+        :return: (en passant move (True/False), pawn promotion (True/False)
+        """
+        # store information - pawn has been moved and if it was moved 2 spaces (could be captured en passant)
         self.init_position = False
         if abs(self.row - row) == 2:
             self.just_moved_two = True
         else:
             self.just_moved_two = False
+        # updates it's location
         self.row = row
         self.col = col
 
-        ret = []
-
+        # was the move an en passant move
+        ret = [False, False]
         if (row, col) in self.en_passant_move:
-            ret.append(True)
-        else:
-            ret.append(False)
+            ret[0] = True
 
+        # is the move a pawn promotion
         if self.team == Team.WHITE and row == 0:
-            ret.append(True)
+            ret[1] = True
         elif self.team == Team.BLACK and row == 7:
-            ret.append(True)
-        else:
-            ret.append(False)
+            ret[1] = True
 
         return ret
 
     def en_passant(self, board):
+        """
+        Method check the current pawn on the board and returns valid en passant moves
+        :param board: current board object
+        :return: List[Tuples] which represent en passant moves
+        """
         # spaces to the left and right of pawn
         left = (self.row, self.col - 1)
         right = (self.row, self.col + 1)
