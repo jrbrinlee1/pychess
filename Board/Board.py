@@ -169,7 +169,7 @@ class Board:
             for col in COLS:
                 pc = self.board[row][col]
                 if pc:
-                    pc.move(row, col)
+                    # pc.move(row, col)
                     if pc.get_team() == Team.WHITE:
                         self.white_pieces.append(pc)
                     else:
