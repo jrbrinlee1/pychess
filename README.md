@@ -8,6 +8,8 @@ pip install pipenv
 
 pipenv shell
 
+pipenv install --dev
+
 python3 PyChess.py
 
 # Game Play
