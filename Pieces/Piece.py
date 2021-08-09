@@ -65,7 +65,7 @@ class Piece(ABC):
 
         return valid_moves
 
-    def move(self, row, col):
+    def move(self, row, col, board):
         self.row = row
         self.col = col
 
@@ -74,6 +74,7 @@ class Piece(ABC):
 
     def get_location(self):
         return self.row, self.col
+
 
 
 
