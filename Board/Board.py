@@ -82,7 +82,23 @@ class Board:
         new_board = self.copy_board_object()
         return_dictionary = {'board': new_board, 'game_over': False, 'draw': False, 'winner': None}
         piece = new_board.get_board()[current_pos[0]][current_pos[1]]
-        data = piece.move(next_pos[0], next_pos[1])
+        """
+        if gui_move:
+            print(f"Board:")
+            new_board.print_board()
+            print(f"Piece: {piece}")
+            print(f"current position: {current_pos[0], current_pos[1]}")
+            print(f"destination position: {next_pos[0], next_pos[1]}")
+        if not gui_move:
+            print("SOME NONE GUI ACTION......")
+            print()
+            print(f"Board:")
+            new_board.print_board()
+            print(f"Piece: {piece}")
+            print(f"current position: {current_pos[0], current_pos[1]}")
+            print(f"destination position: {next_pos[0], next_pos[1]}")
+        """
+        data = piece.move(next_pos[0], next_pos[1], new_board)
         new_board.moves_since_taken += 1
         castle = False
 
@@ -94,7 +110,7 @@ class Board:
             king_col = 6 if next_pos[1] == 7 else 2
             rook_col = 5 if next_pos[1] == 7 else 3
             rook = new_board.get_board()[row][next_pos[1]]
-            rook.move(row, rook_col)
+            rook.move(row, rook_col, new_board)
             new_board.get_board()[row][king_col] = piece
             new_board.get_board()[row][rook_col] = rook
             new_board.get_board()[current_pos[0]][current_pos[1]] = False
@@ -114,7 +130,7 @@ class Board:
             if isinstance(piece, Pawn):
                 if data[0]:  # if en passant
                     new_board.moves_since_taken = 0
-                    new_board.board[next_pos[0] + 1][next_pos[1]] = False
+                    new_board.board[next_pos[0] - piece.direction][next_pos[1]] = False
                 if data[1] and gui_move:  # check if pawn promotion and gui move
                     new_board.execute_pawn_promotion(piece.get_team(), next_pos, ai)
         # endif not castle
@@ -138,6 +154,10 @@ class Board:
         # change turns
         new_board.turn = Team.BLACK if piece.get_team() == Team.WHITE else Team.WHITE
 
+        # update teams pcs
+        new_board.update_teams_pieces()
+
+        """
         # check mate or draw?
         if gui_move:
             pcs = self.white_pieces if new_board.turn == Team.WHITE else self.black_pieces
@@ -156,8 +176,7 @@ class Board:
                     return_dictionary['winner'] = 'white team' if new_board.turn == Team.BLACK else 'black team'
                 else:
                     return_dictionary['draw'] = True
-
-        new_board.update_teams_pieces()
+        """
 
         return return_dictionary
 
@@ -438,3 +457,4 @@ class Board:
 
     def team_turn(self):
         return self.turn
+
