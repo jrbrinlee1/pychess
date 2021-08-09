@@ -52,7 +52,7 @@ class Rook(Piece):
         """
         return Rook(self.team, self.row, self.col, self.init_position)
 
-    def move(self, row, col):
+    def move(self, row, col, board):
         """
         Updates the location details of current rook piece (self.row and self.col) and it stores that it's been moved
         :param row: destination row
