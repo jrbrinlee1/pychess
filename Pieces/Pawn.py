@@ -68,13 +68,14 @@ class Pawn(Piece):
         """
         return [(self.row + self.direction, self.col + 1), (self.row + self.direction, self.col - 1)]
 
-    def move(self, row, col):
+    def move(self, row, col, board):
         """
         Updates the location details of current pawn piece (self.row and self.col) and updates self.init_position to
         show that the pawn has been moved. Also keeps track of if the pawn was just moved two spaces (it could be
         captured en passant). Finally, checks and returns whether move was en passant or pawn promotion.
         :param row: destination row
         :param col: destination column
+        :param board: board
         :return: (en passant move (True/False), pawn promotion (True/False)
         """
         # store information - pawn has been moved and if it was moved 2 spaces (could be captured en passant)
@@ -83,14 +84,16 @@ class Pawn(Piece):
             self.just_moved_two = True
         else:
             self.just_moved_two = False
-        # updates it's location
-        self.row = row
-        self.col = col
 
         # was the move an en passant move
         ret = [False, False]
+        self.en_passant(board)
         if (row, col) in self.en_passant_move:
             ret[0] = True
+
+        # updates it's location
+        self.row = row
+        self.col = col
 
         # is the move a pawn promotion
         if self.team == Team.WHITE and row == 0:
@@ -130,4 +133,5 @@ class Pawn(Piece):
                         attack_moves.append((self.row + self.direction, self.col + 1))
 
         self.en_passant_move = attack_moves
+
 
