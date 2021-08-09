@@ -109,7 +109,7 @@ class King(Piece):
             board.turn = self.team
             return False
 
-    def move(self, row, col):
+    def move(self, row, col, board):
         """
         Updates the location details of current king piece (self.row and self.col)
         :param row: destination row
@@ -180,3 +180,4 @@ class King(Piece):
                 valid_moves.remove(move)
 
         return valid_moves
+
